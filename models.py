@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import tqdm
 
@@ -47,8 +48,8 @@ class nnPredictor():
         scheduler = scheduler(self.optim, 'min', patience=2)
         
         train_loss = []
-        test_losss = []
-                
+        test_loss = []
+         
         for epoch in range(num_epochs):
             with tqdm.tqdm(enumerate(data_train.batch_generator()), total=int(len(data_train) / batch_size)) as iterator:
                 for batch_num, batch in iterator:
@@ -69,12 +70,13 @@ class nnPredictor():
                 self.model.eval()
                 val_loss = self.test(data_test, batch_size)
                 scheduler.step(val_loss)
-                test_losses.append(val_loss)
+                test_loss.append(val_loss)
                 self.model.train()
         
         return train_loss, test_loss
 
     def test(self, data_test, batch_size=64):
+        #add other reductions + add functionality to remove predict
         scores = []
     
         with torch.no_grad():
@@ -86,7 +88,7 @@ class nnPredictor():
                     outputs = self.model(text)
                     scores.append(self.criterion(outputs, labels))
                     
-        return torch.mean(scores)
+        return torch.mean(torch.stack(scores))
         
     
     def save(self, path):
